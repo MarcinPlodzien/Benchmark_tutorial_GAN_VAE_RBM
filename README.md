@@ -95,14 +95,39 @@ This "push-down, push-up" mechanism creates an energy valley around the true dat
 
 ---
 
-## 4. Methodology & Constraints
+## 4. Target Distribution Zoology
 
-### 4.1 Parameter Budgeting
+We test the generative capabilities against a diverse set of synthetic distributions, ranging from simple Gaussian mixtures to discrete Poisson distributions.
+
+### 4.1 Gaussian Mixtures (Multimodal)
+$P(x)$ is defined as an equally weighted mixture of $M$ Gaussian modes:
+$$ P(x) = \frac{1}{M} \sum_{i=1}^M \mathcal{N}(x | \mu_i, \sigma^2 I) $$
+
+*   **`1D_BIMODAL`**: Two modes at $\mu \in \{-1.5, 1.5\}$ with $\sigma=0.4$. Tests ability to capture separated clusters.
+*   **`1D_TRIMODAL`**: Three modes at $\mu \in \{-2.0, 0.0, 2.0\}$ with $\sigma=0.35$.
+*   **`1D_QUADMODAL`**: Four modes at $\mu \in \{-2.5, -0.8, 0.8, 2.5\}$ with $\sigma=0.3$. Tests high-frequency mode collapse resilience.
+*   **`2D_MIX_GAUSS`**: Four modes at the corners of a square $\mu \in \{(\pm 1.5, \pm 1.5)\}$ with $\sigma=0.5$.
+
+### 4.2 Skewed Distribution (Beta)
+*   **`1D_BETA`**: A Beta distribution mapped to the domain $[-2.5, 2.5]$.
+    $$ x \sim \text{Beta}(\alpha=2, \beta=5) $$
+    This creates a right-skewed distribution, testing the model's ability to learn asymmetry.
+
+### 4.3 Discrete Distribution (Poisson)
+*   **`1D_POISSON`**: A discrete Poisson distribution shifted to be centered near zero.
+    $$ x \sim \text{Poisson}(\lambda=4) - \lambda $$
+    Use with `NUM_BINS > 0` to treat this as a true discrete generation task.
+
+---
+
+## 5. Methodology & Constraints
+
+### 5.1 Parameter Budgeting
 To compare model architectures fairly, we solve for the exact Hidden Dimension ($H$) that results in a parameter count closest to the target `PARAMETER_BUDGET`.
 *   **GAN/VAE**: The number of parameters in an MLP is quadratic with respect to layer width. We solve the quadratic equation $N_{params}(H) = P$ to find $H$.
 *   **RBM**: The relation is linear ($N \approx D \cdot H$). We solve $H \approx P/D$.
 
-### 4.2 Discretization (The "Binning" Feature)
+### 5.2 Discretization (The "Binning" Feature)
 The benchmarks support a `NUM_BINS` mode. When enabled ($>0$):
 1.  **Preprocessing**: Continuous 1D data is digitized into $N$ bins and converted to One-Hot Vectors.
 2.  **Model Change**:
@@ -110,14 +135,14 @@ The benchmarks support a `NUM_BINS` mode. When enabled ($>0$):
     *   **GAN/VAE**: Input/Output dimensions expand to `NUM_BINS`.
 3.  **Visualization**: The One-Hot outputs are "Soft Decoded" (or Hard Decoded) back to spatial coordinates to compute KLD against the ground truth.
 
-### 4.3 Evaluation Metric (KLD)
+### 5.3 Evaluation Metric (KLD)
 We quantify performance using **Kullback-Leibler Divergence (KLD)** between the histogram of the true target distribution $P$ and the histogram of the model's generated samples $Q$.
 $$ D_{KL}(P || Q) = \sum_i P_i \log \left( \frac{P_i}{Q_i + \epsilon} \right) $$
 Lower KLD indicates better performance. An $\epsilon$ term is added for numerical stability.
 
 ---
 
-## 5. Usage & Configuration
+## 6. Usage & Configuration
 
 Configuration is located at the top of `generative_models_GAN_VAE_RBM_benchmarks.py`.
 
