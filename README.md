@@ -1,6 +1,6 @@
 # Classical Generative Benchmarks
 
-This repository implements a comparative framework for **Generative Adversarial Networks (GANs)**, **Variational Autoencoders (VAEs)**, and **Restricted Boltzmann Machines (RBMs)** using **JAX**.
+This repository implements a comparative framework for **Generative Adversarial Networks (GANs)**, **Variational Autoencoders (VAE)**, and **Restricted Boltzmann Machines (RBM)** using **JAX**.
 
 The primary objective is to evaluate algorithmic efficiency under fixed constraints. By enforcing a **Universal Parameter Budget**, the benchmarks control for model capacity, facilitating direct comparison between diverse generative architectures.
 
@@ -34,11 +34,14 @@ The standard Minimax loss ($\min \log(1-D(G(z)))$) suffers from vanishing gradie
 
 **1. Discriminator Step**:
 Maximize the log-likelihood of correctly classifying real and fake data.
+
 $$ \mathcal{L}_D = - \left( \mathbb{E}_{x \sim data}[\log D(x)] + \mathbb{E}_{z \sim noise}[\log(1 - D(G(z)))] \right) $$
+
 *   **Implementation Detail**: We use **Label Smoothing** for the real class. Instead of targeting $1.0$, the Discriminator is trained to predict $0.9$. This regularizes the Discriminator, preventing it from becoming too confident and providing "flat" gradients to the Generator.
 
 **2. Generator Step**:
 Maximize the probability of the Discriminator being mistaken (classifying fake data as real).
+
 $$ \mathcal{L}_G = - \mathbb{E}_{z \sim noise}[\log D(G(z))] $$
 
 ---
@@ -58,11 +61,14 @@ The VAE represents a Probabilistic Graphical Model. It assumes data is generated
 
 ### 2.3 The Reparameterization Trick
 To allow gradient descent to propagate through the stochastic sampling step $z \sim \mathcal{N}(\mu, \sigma^2)$, we reparameterize the randomness:
+
 $$ z = \mu + \sigma \odot \epsilon, \quad \text{where } \epsilon \sim \mathcal{N}(0, I) $$
+
 Now, the stochasticity is injected via $\epsilon$ (a constant input node), allowing $\mu$ and $\sigma$ to be differentiable parameters.
 
 ### 2.4 Loss Function (ELBO)
 We minimize the Negative Evidence Lower Bound (ELBO):
+
 $$ \mathcal{L}_{VAE} = \underbrace{ ||x - \hat{x}||^2 }_{\text{Reconstruction (MSE)}} + \beta \cdot \underbrace{ D_{KL}( \mathcal{N}(\mu, \sigma) || \mathcal{N}(0, I) ) }_{\text{Regularization}} $$
 
 *   **Reconstruction**: Measures how well the VAE preserves information.
@@ -82,7 +88,9 @@ Training a VAE is a balancing act between two opposing forces:
 
 ### 3.1 Theoretical Framework
 The RBM is an **Energy-Based Model (EBM)**. It defines a scalar "Energy" $E(v, h)$ for every configuration of visible units $v$ (data) and hidden units $h$ (features). The probability of a state is given by the Boltzmann distribution:
+
 $$ P(v) = \frac{\sum_h e^{-E(v,h)}}{Z} $$
+
 where $Z$ is the partition function (normalization constant). Learning consists of shaping the energy landscape such that real data points have low energy (high probability) and noise has high energy.
 
 ### 3.2 Architecture
@@ -104,7 +112,7 @@ $$ \nabla \mathcal{L} \approx \underbrace{\nabla \text{FreeEnergy}(v_{data})}_{\
     
 This "push-down, push-up" mechanism creates an energy valley around the true data distribution.
 
-### 3.4 intuition: Sculpting the Energy Landscape
+### 3.4 Intuition: Sculpting the Energy Landscape
 Imagine the Energy function $E(v)$ as a physical terrain.
 *   **Likelihood** corresponds to **Low Energy**.
 *   **Training** is the process of "digging holes" at the locations of real data points (Positive Phase) and "piling up dirt" at the locations where the model currently hallucinates/drifts (Negative Phase).
@@ -117,23 +125,31 @@ Imagine the Energy function $E(v)$ as a physical terrain.
 We test the generative capabilities against a diverse set of synthetic distributions, ranging from simple Gaussian mixtures to discrete Poisson distributions.
 
 ### 4.1 Gaussian Mixtures (Multimodal)
-$P(x)$ is defined as an equally weighted mixture of $M$ Gaussian modes:
+
+The target probability density $P(x)$ is defined as an equally weighted mixture of $M$ Gaussian modes:
+
 $$ P(x) = \frac{1}{M} \sum_{i=1}^M \mathcal{N}(x | \mu_i, \sigma^2 I) $$
 
 *   **`1D_BIMODAL`**: Two modes at $\mu \in \{-1.5, 1.5\}$ with $\sigma=0.4$. Tests ability to capture separated clusters.
 *   **`1D_TRIMODAL`**: Three modes at $\mu \in \{-2.0, 0.0, 2.0\}$ with $\sigma=0.35$.
 *   **`1D_QUADMODAL`**: Four modes at $\mu \in \{-2.5, -0.8, 0.8, 2.5\}$ with $\sigma=0.3$. Tests high-frequency mode collapse resilience.
-*   **`2D_MIX_GAUSS`**: Four modes at the corners of a square $\mu \in \{(\pm 1.5, \pm 1.5)\}$ with $\sigma=0.5$.
+*   **`2D_MIX_GAUSS`**: Four modes at the corners of a square $\mu \in \{ (\pm 1.5, \pm 1.5) \}$ with $\sigma=0.5$.
 
 ### 4.2 Skewed Distribution (Beta)
+
 *   **`1D_BETA`**: A Beta distribution mapped to the domain $[-2.5, 2.5]$.
-    $$ x \sim \text{Beta}(\alpha=2, \beta=5) $$
-    This creates a right-skewed distribution, testing the model's ability to learn asymmetry.
+
+$$ x \sim \text{Beta}(\alpha=2, \beta=5) $$
+
+This creates a right-skewed distribution, testing the model's ability to learn asymmetry.
 
 ### 4.3 Discrete Distribution (Poisson)
+
 *   **`1D_POISSON`**: A discrete Poisson distribution shifted to be centered near zero.
-    $$ x \sim \text{Poisson}(\lambda=4) - \lambda $$
-    Use with `NUM_BINS > 0` to treat this as a true discrete generation task.
+
+$$ x \sim \text{Poisson}(\lambda=4) - \lambda $$
+
+Use with `NUM_BINS > 0` to treat this as a true discrete generation task.
 
 ---
 
@@ -154,7 +170,9 @@ The benchmarks support a `NUM_BINS` mode. When enabled ($>0$):
 
 ### 5.3 Evaluation Metric (KLD)
 We quantify performance using **Kullback-Leibler Divergence (KLD)** between the histogram of the true target distribution $P$ and the histogram of the model's generated samples $Q$.
+
 $$ D_{KL}(P || Q) = \sum_i P_i \log \left( \frac{P_i}{Q_i + \epsilon} \right) $$
+
 Lower KLD indicates better performance. An $\epsilon$ term is added for numerical stability.
 
 ---
