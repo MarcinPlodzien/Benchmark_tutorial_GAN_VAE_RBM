@@ -250,7 +250,19 @@ $$
 This allows the GAN to learn categorical distributions effectively, competing fairly with the discrete RBM.
 
 ### 6.2 VAE Latent Manifold Visualization
-To verify that the VAE learns a meaningful continuous representation, we generate a **Latent Sweep Plot**. We iterate the latent variables $z_1, z_2$ from $[-3, 3]$ and visualize the decoder's output. A well-trained VAE will show smooth morphing between modes.
+To verify that the VAE has learned a meaningful continuous representation rather than simply memorizing training data, we employ a **Latent Manifold Sweep**.
+
+#### Conceptual Objective
+A key property of VAEs is the **continuity** of the latent space. Unlike standard autoencoders, a VAE forces the latent code $z$ to follow a Gaussian prior $\mathcal{N}(0, I)$. This implies that:
+1.  **Interpolation**: Moving smoothly from $z_A$ to $z_B$ should result in a smooth semantic transformation in the data space $x$.
+2.  **Completeness**: Any point sampled from the prior should map to a valid data point.
+
+#### Determining Smoothness
+We iterate the latent variables $z_1, z_2$ across a 2D grid from $[-3, 3]$ and visualize the decoder's expected output $E[x|z]$.
+*   **Success**: The visualization shows smooth transitions between the modes (e.g., gradually deforming one spike into another).
+*   **Failure**: The visualization shows sharp, disjoint boundaries or "holes" (regions of noise), indicating a failure to regularize the manifold.
+
+The resulting plot `vae_latent_manifold_sweep.png` serves as a visual proof of the model's generative capability.
 
 ---
 
