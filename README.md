@@ -168,16 +168,93 @@ The benchmarks support a `NUM_BINS` mode. When enabled ($>0$):
     *   **GAN/VAE**: Input/Output dimensions expand to `NUM_BINS`.
 3.  **Visualization**: The One-Hot outputs are "Soft Decoded" (or Hard Decoded) back to spatial coordinates to compute KLD against the ground truth.
 
-### 5.3 Evaluation Metric (KLD)
+### 5.3 Metric 1: Kullback-Leibler Divergence (KLD)
 We quantify performance using **Kullback-Leibler Divergence (KLD)** between the histogram of the true target distribution $P$ and the histogram of the model's generated samples $Q$.
 
-$$ D_{KL}(P || Q) = \sum_i P_i \log \left( \frac{P_i}{Q_i + \epsilon} \right) $$
+$$
+D_{KL}(P || Q) = \sum_i P_i \log \left( \frac{P_i}{Q_i + \epsilon} \right)
+$$
 
 Lower KLD indicates better performance. An $\epsilon$ term is added for numerical stability.
 
+### 5.4 Metric 2: Wasserstein Distance (Earth Mover's Distance)
+
+While KLD measures "overlap" (information theoretic), the **Wasserstein Distance** measures "geometry" (transport cost), making it effective for disjoint distributions where KLD fails.
+
+#### 5.4.1 Conceptual Framework: Optimal Transport
+To understand the distinct advantage of Wasserstein Distance, we view probability distributions through the lens of Optimal Transport. Consider two distributions:
+1.  **Distribution P** (The Model): A mass distribution $P(x)$.
+2.  **Distribution Q** (The Target): A capacity distribution $Q(x)$.
+
+The Wasserstein Distance is defined as the **minimum cost** required to transport the mass from state $P$ to state $Q$.
+
+$$
+\text{Cost} = \text{Mass} \times \text{Distance Moved}
+$$
+
+**Comparative Analysis: Disjoint Support**
+Consider a scenario where the model $P$ is concentrated at $x=0$ and the target $Q$ is concentrated at $x=10$.
+
+*   **KLD (Overlap-based)**:
+    Since $P(x) \cdot Q(x) = 0$ everywhere, the divergence is maximized (or infinite). Crucially, the gradient is zero because small local perturbations of $P$ (e.g., moving to $x=0.1$) do not create overlap. The optimizer has no signal.
+
+*   **Wasserstein (Geometry-based)**:
+    The metric calculates the physical work required to move the mass from $0$ to $10$.
+
+    $$
+    W_1 = 10 \times 1.0 = 10
+    $$
+
+    If the model updates and moves its mass to $1$, the cost reduces to $9$. This provides a smooth, non-zero gradient ($ \nabla \mathcal{L} \neq 0 $) that guides the model towards the target.
+
+#### 5.4.2 Mathematical Formulation (The 1D Case)
+In one dimension, the optimal transport plan has a closed-form solution involving the **Cumulative Distribution Functions (CDF)**.
+
+**Definition**:
+The CDF $F(x)$ aggregates the probability mass accumulated up to point $x$:
+
+$$
+F_P(x) = \int_{-\infty}^{x} P(t) \, dt \quad (\text{or } \sum_{t \le x} P(t))
+$$
+
+**Integral Formula**:
+The Wasserstein-1 distance is exactly the $L_1$ distance between the two CDFs:
+
+$$
+W_1(P, Q) = \int_{-\infty}^{\infty} | F_P(x) - F_Q(x) | dx
+$$
+
+#### 5.4.3 Computational Intuition (Quantiles)
+While the integral definition is theoretically robust, in practice (for finite samples), the Wasserstein-1 distance has an equivalent, computationally tangible interpretation:
+
+**The Mean Absolute Difference of Quantiles**
+If we sort both the model's samples $X_{model}$ and the target samples $X_{target}$ in ascending order, the Wasserstein distance is simply the average distance between the $k$-th smallest sorted sample of each set.
+
+$$
+W_1 \approx \frac{1}{N} \sum_{k=1}^{N} | \text{sorted}(X_{model})_k - \text{sorted}(X_{target})_k |
+$$
+
+This interpretation connects the geometry of the distribution directly to the numerical implementation (e.g., `scipy.stats.wasserstein_distance`).
+
 ---
 
-## 6. Usage & Configuration
+## 6. Advanced Features
+
+### 6.1 Gumbel-Softmax (Discrete GAN)
+When `NUM_BINS > 0`, the GAN Generator uses the **Gumbel-Softmax** trick to output differentiable discrete approximations.
+
+$$
+y = \text{Softmax}\left( \frac{\log(\pi) + g}{\tau} \right)
+$$
+
+This allows the GAN to learn categorical distributions effectively, competing fairly with the discrete RBM.
+
+### 6.2 VAE Latent Manifold Visualization
+To verify that the VAE learns a meaningful continuous representation, we generate a **Latent Sweep Plot**. We iterate the latent variables $z_1, z_2$ from $[-3, 3]$ and visualize the decoder's output. A well-trained VAE will show smooth morphing between modes.
+
+---
+
+## 7. Usage & Configuration
 
 Configuration is located at the top of `generative_models_GAN_VAE_RBM_benchmarks.py`.
 
