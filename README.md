@@ -1,8 +1,8 @@
 # Classical Generative Benchmarks
 
-A rigorous, meticulously implemented benchmarking suite for three fundamental families of classical generative networks: **Generative Adversarial Networks (GAN)**, **Variational Autoencoders (VAE)**, and **Restricted Boltzmann Machines (RBM)**.
+This repository implements a comparative framework for **Generative Adversarial Networks (GANs)**, **Variational Autoencoders (VAEs)**, and **Restricted Boltzmann Machines (RBMs)** using **JAX**.
 
-This project is engineered to facilitate strict, "apples-to-apples" comparisons between diverse architectures. By enforcing a **Universal Parameter Budget**, we control for model capacity, isolating the algorithmic efficiency of each generative approach. The implementation utilizes **JAX** for high-performance, JIT-compiled execution.
+The primary objective is to evaluate algorithmic efficiency under fixed constraints. By enforcing a **Universal Parameter Budget**, the benchmarks control for model capacity, facilitating direct comparison between diverse generative architectures.
 
 ---
 
