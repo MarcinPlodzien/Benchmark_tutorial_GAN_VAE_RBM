@@ -262,7 +262,8 @@ We iterate the latent variables $z_1, z_2$ across a 2D grid from $[-3, 3]$ and v
 *   **Success**: The visualization shows smooth transitions between the modes (e.g., gradually deforming one spike into another).
 *   **Failure**: The visualization shows sharp, disjoint boundaries or "holes" (regions of noise), indicating a failure to regularize the manifold.
 
-The resulting plot `vae_latent_manifold_sweep.png` serves as a visual proof of the model's generative capability.
+**Output File**: `vae_latent_manifold_sweep.png`
+(Look for this file in `results_classical_benchmarks/` after running the script).
 
 ---
 
@@ -281,3 +282,13 @@ Run the benchmark:
 ```bash
 python3 generative_models_GAN_VAE_RBM_benchmarks.py
 ```
+
+## 8. Key Outputs
+All results are saved to `results_classical_benchmarks/`.
+
+| Filename | Description |
+| :--- | :--- |
+| `metrics_comparison.png` | **Primary Dashboard**. Shows KLD (Left) and Wasserstein Distance (Right) vs Epochs. |
+| `classical_benchmark_comparison_hist.png` | **Final Histogram**. Side-by-side comparison of Target density vs generated samples. |
+| `vae_latent_manifold_sweep.png` | **VAE Manifold**. (Section 6.2) Visualizes the decoder output $E[x|z]$ as we sweep latent $z$. |
+| `timeline_*.png` | **Training Evolution**. Snapshots of the distributions at 5%, 10%, ... 100% of training. |
